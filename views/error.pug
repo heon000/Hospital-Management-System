@@ -1,0 +1,10 @@
+doctype html
+html
+  head
+    title 오류 발생
+  body
+    h1= message
+    if error.status
+      h2 상태 코드: #{error.status}
+    if error.stack
+      pre #{error.stack}

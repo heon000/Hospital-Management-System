@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>환자 정보</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    h2 {
+      color: #2a5d9f;
+    }
+    .record {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      background-color: #f7f7f7;
+    }
+    .label {
+      font-weight: bold;
+    }
+    button {
+      background-color: #2a5d9f;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    .edit-form {
+      margin-top: 30px;
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>환자 상세 정보</h2>
+  <div id="patientInfo">불러오는 중...</div>
+  <button onclick="location.href='patientForm.html'">➕ 새 환자 등록하기</button>
+  <button id="editBtn">✏️ 수정하기</button>
+  <button id="deleteBtn">🗑 삭제하기</button>
+
+  <div class="edit-form" id="editForm" style="display:none;">
+    <h3>환자 정보 수정</h3>
+    <label>이름:<input type="text" id="editName"></label>
+    <label>생년월일:<input type="date" id="editBirthdate"></label>
+    <button onclick="submitEdit()">💾 저장</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('id');
+    let patientData = null;
+
+    async function getPatientData(id) {
+      const res = await fetch(`/api/patient/${id}`);
+      if (!res.ok) {
+        document.getElementById('patientInfo').innerHTML = '❌ 접근 권한이 없거나 존재하지 않는 환자입니다';
+        return;
+      }
+
+      const patient = await res.json();
+      patientData = patient;
+
+      document.getElementById('editName').value = patient.name;
+      document.getElementById('editBirthdate').value = new Date(patient.birthdate).toISOString().substring(0, 10);
+
+      const container = document.getElementById('patientInfo');
+      container.innerHTML = `
+        <p><span class="label">이름:</span> ${patient.name}</p>
+        <p><span class="label">생년월일:</span> ${new Date(patient.birthdate).toLocaleDateString()}</p>
+        <p><span class="label">병원 ID:</span> ${patient.hospitalId}</p>
+        <h3>의료 기록</h3>
+        ${
+          patient.medicalRecords.map(r => `
+            <div class="record">
+              <p><span class="label">날짜:</span> ${new Date(r.date).toLocaleDateString()}</p>
+              <p><span class="label">문진 내용:</span> ${r.symptoms}</p>
+              <p><span class="label">진단 내용:</span> ${r.diagnosis}</p>
+              <p><span class="label">담당 의사 ID:</span> ${r.doctorId}</p>
+            </div>
+          `).join('')
+        }
+      `;
+    }
+
+    function showEditForm() {
+      document.getElementById('editForm').style.display = 'block';
+    }
+
+    async function submitEdit() {
+      const updated = {
+        name: document.getElementById('editName').value,
+        birthdate: document.getElementById('editBirthdate').value
+      };
+      const res = await fetch(`/api/patient/${patientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      if (res.ok) {
+        alert('✅ 수정 완료');
+        location.reload();
+      } else {
+        alert('❌ 수정 실패');
+      }
+    }
+
+    async function deletePatient() {
+      if (!confirm('정말 삭제하시겠습니까?')) return;
+      const res = await fetch(`/api/patient/${patientId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert('🗑 삭제 완료');
+        window.location.href = 'patientList.html';
+      } else {
+        alert('❌ 삭제 실패');
+      }
+    }
+
+    if (patientId) {
+      getPatientData(patientId);
+    } else {
+      document.getElementById('patientInfo').innerText = '❌ 환자 ID가 없습니다';
+    }
+
+    document.getElementById('editBtn').addEventListener('click', showEditForm);
+    document.getElementById('deleteBtn').addEventListener('click', deletePatient);
+  </script>
+</body>
+</html>

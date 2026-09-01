@@ -1,0 +1,253 @@
+extends layout
+
+block content
+  .admin-dashboard
+    h1 🏥 병원 관리 시스템 (서버 관리자용)
+
+    .dashboard-grid
+      .dashboard-section
+        h2 📥 병원 등록 승인 대기
+        ul#hospitalPendingList.dashboard-list
+
+      .dashboard-section
+        h2 🛠️ 병원 정보 수정 요청
+        ul#updateRequestList.dashboard-list
+
+      .dashboard-section
+        h2 👩‍💼 병원 관리자 신청 목록
+        ul#adminRequestList.dashboard-list
+
+      .dashboard-section
+        h2 🗑️ 병원 삭제 이력 승인 대기
+        ul#deleteLogList.dashboard-list
+
+      .dashboard-section
+        h2 📋 현재 등록된 병원 목록
+        ul#hospitalList.dashboard-list
+
+  h1 백업 복구
+  form#restore-form
+    label(for="backupFolderName") 백업 폴더 이름:
+    input(type="text", id="backupFolderName", name="backupFolderName")
+    button(type="submit") 복구 실행
+  div#result
+
+  link(rel="stylesheet", href="/stylesheets/admin.css")
+
+  // 자바스크립트 포함
+  script.
+    // ✅ 병원 등록 승인 대기 목록 불러오기
+    async function loadPendingHospitals() {
+      const res = await fetch('/admin/hospitals');
+      const hospitals = await res.json();
+      const list = document.getElementById('hospitalPendingList');
+      list.innerHTML = '';
+
+      const unapproved = hospitals.filter(h => !h.approved);
+      if (unapproved.length === 0) {
+        list.innerHTML = '<li>대기 중인 병원이 없습니다.</li>';
+        return;
+      }
+
+      unapproved.forEach(hospital => {
+        const li = document.createElement('li');
+        li.textContent = `${hospital.name} (${hospital.address})`;
+
+        const approveBtn = document.createElement('button');
+        approveBtn.textContent = '승인';
+        approveBtn.onclick = () => approveHospital(hospital._id);
+        li.appendChild(approveBtn);
+
+        list.appendChild(li);
+      });
+    }
+
+    async function approveHospital(hospitalId) {
+      const res = await fetch(`/admin/hospitals/${hospitalId}/approve`, { method: 'PATCH' });
+      const result = await res.json();
+      alert(result.message);
+      loadPendingHospitals();
+      loadHospitals();
+    }
+
+    // ✅ 병원 정보 수정 요청 목록 불러오기
+    async function loadUpdateRequests() {
+      const res = await fetch('/admin/update-requests');
+      const requests = await res.json();
+      const list = document.getElementById('updateRequestList');
+      list.innerHTML = '';
+
+      const pending = requests.filter(req => !req.approved);
+      if (pending.length === 0) {
+        list.innerHTML = '<li>수정 요청 없음</li>';
+        return;
+      }
+
+      pending.forEach(req => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          병원명: ${req.hospital.name}<br>
+          기존 → 이름: ${req.hospital.name}, 주소: ${req.hospital.address}, 연락처: ${req.hospital.contact}<br>
+          수정 → 이름: ${req.changes.name}, 주소: ${req.changes.address}, 연락처: ${req.changes.contact}
+        `;
+
+        const approveBtn = document.createElement('button');
+        approveBtn.textContent = '승인';
+        approveBtn.onclick = () => approveUpdate(req._id);
+        li.appendChild(approveBtn);
+
+        const rejectBtn = document.createElement('button');
+        rejectBtn.textContent = '거절';
+        rejectBtn.onclick = () => rejectUpdate(req._id);
+        li.appendChild(rejectBtn);
+
+        list.appendChild(li);
+      });
+    }
+
+    async function approveUpdate(requestId) {
+      const res = await fetch(`/admin/update-requests/${requestId}/approve`, { method: 'PATCH' });
+      const result = await res.json();
+      alert(result.message);
+      loadUpdateRequests();
+    }
+
+    async function rejectUpdate(requestId) {
+      const res = await fetch(`/admin/update-requests/${requestId}/reject`, { method: 'DELETE' });
+      const result = await res.json();
+      alert(result.message);
+      loadUpdateRequests();
+    }
+
+    // ✅ 병원 관리자 신청 목록 불러오기
+    async function loadAdminRequests() {
+      const res = await fetch('/admin/admin-requests');
+      const requests = await res.json();
+      const list = document.getElementById('adminRequestList');
+      list.innerHTML = '';
+
+      const pending = requests.filter(r => !r.approved);
+      if (pending.length === 0) {
+        list.innerHTML = '<li>관리자 신청 없음</li>';
+        return;
+      }
+
+      pending.forEach(req => {
+        const li = document.createElement('li');
+        li.textContent = `신청자: ${req.userId?.email || '알 수 없음'}`;
+
+        const approveBtn = document.createElement('button');
+        approveBtn.textContent = '승인';
+        approveBtn.onclick = () => approveAdmin(req._id);
+        li.appendChild(approveBtn);
+
+        list.appendChild(li);
+      });
+    }
+
+    async function approveAdmin(requestId) {
+      const res = await fetch(`/admin/admin-requests/${requestId}/approve`, { method: 'PATCH' });
+      const result = await res.json();
+      alert(result.message);
+      loadAdminRequests();
+    }
+
+    // ✅ 병원 삭제 이력 승인대기 목록
+    async function loadDeleteLogs() {
+      const res = await fetch('/admin/deleted-logs');
+      const logs = await res.json();
+      const list = document.getElementById('deleteLogList');
+      list.innerHTML = '';
+
+      logs.forEach(log => {
+        const li = document.createElement('li');
+        li.textContent = `${log.name} (${log.address}) 삭제됨 - 승인상태: ${log.deleteApproved ? '승인됨' : '미승인'}`;
+
+        if (!log.deleteApproved) {
+          const approveBtn = document.createElement('button');
+          approveBtn.textContent = '삭제 승인';
+          approveBtn.onclick = () => approveDelete(log._id);
+          li.appendChild(approveBtn);
+
+          const rejectBtn = document.createElement('button');
+          rejectBtn.textContent = '삭제 거절';
+          rejectBtn.onclick = () => rejectDelete(log._id);
+          li.appendChild(rejectBtn);
+        }
+
+        list.appendChild(li);
+      });
+    }
+
+    async function approveDelete(logId) {
+      const res = await fetch(`/admin/delete-logs/${logId}/approve`, { method: 'PATCH' });
+      const result = await res.json();
+      alert(result.message);
+      loadDeleteLogs();
+    }
+
+    async function rejectDelete(logId) {
+      const res = await fetch(`/admin/delete-logs/${logId}/reject`, { method: 'DELETE' });
+      const result = await res.json();
+      alert(result.message);
+      loadDeleteLogs();
+    }
+
+    // ✅ 승인 완료된 병원 전체 목록
+    async function loadHospitals() {
+      const res = await fetch('/admin/approved-hospitals');
+      const hospitals = await res.json();
+      const list = document.getElementById('hospitalList');
+      list.innerHTML = '';
+
+      hospitals.forEach(h => {
+        const li = document.createElement('li');
+        li.textContent = `${h.name} (${h.address})`;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('restore-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const backupFolderName = document.getElementById('backupFolderName').value.trim();
+
+      if (!backupFolderName) {
+        document.getElementById('result').innerText = '백업 폴더 이름을 입력해주세요.';
+        return;
+      }
+
+      const confirmed = confirm(`"${backupFolderName}"로 복구하시겠습니까?\n※ 기존 데이터는 모두 삭제됩니다.`);
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch('/admin/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ backupFolderName })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('result').style.color = 'green';
+          document.getElementById('result').innerText = `✅ 복구 성공: ${data.message}`;
+        } else {
+          document.getElementById('result').style.color = 'red';
+          document.getElementById('result').innerText = `❌ 복구 실패: ${data.message}`;
+        }
+      } catch (err) {
+        document.getElementById('result').style.color = 'red';
+        document.getElementById('result').innerText = `❌ 오류 발생: ${err.message}`;
+      }
+    });
+
+
+
+
+    // ✅ 전체 초기 로딩
+    window.onload = () => {
+      loadPendingHospitals();
+      loadUpdateRequests();
+      loadAdminRequests();
+      loadDeleteLogs();
+      loadHospitals();
+    }

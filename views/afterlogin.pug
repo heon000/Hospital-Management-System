@@ -1,0 +1,15 @@
+extends layout
+
+block content
+
+  h2 병원 정보를 입력하세요
+  br
+  
+  form(action="/afterlogin/register-hospital" method="post")
+    label 병원 이름:
+    input(type="text" name="name" required)
+    br
+    label 주소:
+    input(type="text" name="address" required)
+    br
+    button(type="submit") 등록

@@ -1,0 +1,122 @@
+doctype html
+html(lang="ko")
+  head
+    meta(charset="UTF-8")
+    title 의료진 병원 관리
+    style.
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 40px;
+        background-color: #f8f9fa;
+      }
+      h1 {
+        color: #007bff;
+        margin-bottom: 20px;
+      }
+      h2 {
+        margin-top: 40px;
+        color: #343a40;
+      }
+      #currentHospital {
+        margin-bottom: 30px;
+        font-weight: normal;
+      }
+      select, button {
+        margin: 5px 10px 5px 0;
+        padding: 8px 12px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+
+  body
+    if session && session.user
+      nav(style="text-align: right; margin: 10px")
+        a(href="/auth/logout", style="text-decoration: none; color: red") 로그아웃
+
+    h1 🩺 의료진 병원 관리
+
+    // 현재 소속 병원
+    h3#currentHospital 소속 병원: 조회 중...
+
+    // 병원 신청 영역
+    h2 소속 병원 신청
+    div
+      select#hospitalDropdown
+        option(disabled selected) 병원을 선택하세요
+      button(onclick="selectHospital()") 소속 신청
+      button(onclick="cancelHospital()") 소속 신청 취소
+
+    // 병원 관리자 신청 영역
+    h2 병원 관리자 신청
+    div
+      button(onclick="requestManager()") 관리자 신청
+
+    // 자바스크립트 영역
+    script.
+      const userId = `!{userId}`;
+
+      async function loadMyInfo() {
+        const res = await fetch(`/doctor/${userId}/my-info`);
+        const user = await res.json();
+        const hospitalName = user.hospitalId ? user.hospitalId.name : '없음';
+        document.getElementById('currentHospital').textContent = `소속 병원: ${hospitalName}`;
+      }
+
+      async function loadHospitals() {
+        const res = await fetch('/doctor/hospitals/approved');
+        const hospitals = await res.json();
+        const dropdown = document.getElementById('hospitalDropdown');
+        dropdown.innerHTML = '<option disabled selected>병원을 선택하세요</option>';
+        hospitals.forEach(h => {
+          const opt = document.createElement('option');
+          opt.value = h._id;
+          opt.textContent = h.name;
+          dropdown.appendChild(opt);
+        });
+      }
+
+      async function selectHospital() {
+        const selectedId = document.getElementById('hospitalDropdown').value;
+        const res = await fetch(`/doctor/${userId}/select-hospital`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hospitalId: selectedId })
+        });
+        const result = await res.json();
+        alert(result.message);
+        loadMyInfo();
+      }
+
+      async function cancelHospital() {
+        const res = await fetch(`/doctor/${userId}/cancel-hospital`, { method: 'POST' });
+        const result = await res.json();
+        alert(result.message);
+        loadMyInfo();
+      }
+
+      async function requestManager() {
+        const res = await fetch(`/doctor/request-admin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        const result = await res.json();
+        if (res.ok) alert(result.message);
+        else alert(result.error);
+      }
+
+      window.onload = () => {
+        loadMyInfo();
+        loadHospitals();
+      };

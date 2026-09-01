@@ -1,0 +1,20 @@
+extends layout 
+
+block content 
+    h1 로그인
+    
+    if error 
+        p(style="color:red") #{error}
+        
+    form(method="POST", action="/auth/login")
+        div 
+            label(for="email") 이메일:
+            input(type="text", name="email", placeholder="이메일", required)
+        div
+            label(for="password") 비밀번호:
+            input(type="password", name="password", placeholder="비밀번호", required)
+        div
+            button(type="submit") 로그인
+
+    br
+    a.button-link(href="/") 메인화면으로        

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>새 환자 등록</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    form {
+      max-width: 600px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    h2 {
+      color: #2a5d9f;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>새 환자 정보 입력</h2>
+  <form id="patientForm">
+    <label>이름:
+      <input type="text" name="name" required>
+    </label>
+    <label>생년월일:
+      <input type="date" name="birthdate" required>
+    </label>
+    <label>소속 병원 ID:
+      <input type="text" name="hospitalId" id="hospitalId" readonly required>
+    </label>
+
+    <h3>의료 기록</h3>
+    <label>기록 날짜:
+      <input type="date" name="recordDate" required>
+    </label>
+    <label>문진 내용:
+      <textarea name="symptoms" required></textarea>
+    </label>
+    <label>진단 내용:
+      <textarea name="diagnosis" required></textarea>
+    </label>
+    <label>담당 의사 ID:
+      <input type="text" name="doctorId" id="doctorId" readonly required>
+    </label>
+
+    <button type="submit">환자 정보 저장</button>
+  </form>
+
+  <script>
+      // 세션에서 병원 ID와 의사 ID 가져오기
+    async function loadSessionInfo() {
+        const res = await fetch('/api/patient/session', {
+            credentials: 'include'
+        });
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('hospitalId').value = data.hospitalId;
+            document.getElementById('doctorId').value = data.doctorId;
+        } else {
+            alert('세션 정보를 불러오지 못했습니다.');
+        }
+    }
+    loadSessionInfo();
+
+    document.getElementById('patientForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const form = e.target;
+
+      const patientData = {
+        name: form.name.value,
+        birthdate: form.birthdate.value,
+        hospitalId: form.hospitalId.value,
+        medicalRecords: [
+          {
+            date: form.recordDate.value,
+            symptoms: form.symptoms.value,
+            diagnosis: form.diagnosis.value,
+            doctorId: form.doctorId.value
+          }
+        ]
+      };
+
+      const res = await fetch('/api/patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientData)
+      });
+
+      if (res.ok) {
+        alert('저장 완료!');
+        window.location.href = '/patient/patientList.html?refresh=true';
+      } else {
+        alert('저장 실패');
+      }
+    });
+  </script>
+</body>
+</html>

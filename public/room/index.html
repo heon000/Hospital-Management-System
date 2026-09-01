@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>병실 관리 시스템</title>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      text-align: center;
+      background-color: #1976d2;
+      color: white;
+      padding: 20px 0;
+      margin: 0;
+    }
+    #controls, #info {
+      text-align: center;
+      margin-top: 15px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #1976d2;
+      color: white;
+      cursor: pointer;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin: 20px auto;
+    }
+    dialog {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      padding: 20px;
+      width: 300px;
+      font-size: 14px;
+    }
+    dialog h3 {
+      margin-top: 0;
+    }
+    dialog input {
+      width: 90%;
+      margin-bottom: 10px;
+    }
+    dialog button {
+      margin: 3px;
+      padding: 5px 10px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏥 병실 관리 시스템</h2>
+
+  <div id="controls">
+    <label>병원 ID: <input type="text" id="hospitalId" value="64f1a223e1f3d2b0a0c12345" size="24"></label><br>
+    <label>층 수: <input type="number" id="floorCount" min="1" value="3"></label>
+    <label>층당 방 수: <input type="number" id="roomPerFloor" min="1" value="4"></label>
+    <label>방당 수용 인원: <input type="number" id="capacity" min="1" value="4"></label><br>
+    <button onclick="initializeRooms()">병실 정보 입력</button>
+    <button onclick="fetchRooms()">병실 정보 조회</button>
+  </div>
+
+  <div style="text-align:center; margin-top:10px;">
+    <input type="text" id="searchName" placeholder="환자 이름 검색">
+    <button onclick="searchPatient()">검색</button>
+  </div>
+  <div id="searchResult" style="text-align:center; font-weight:bold; margin-top:5px;"></div>
+
+  <canvas id="floorCanvas" width="1200" height="800"></canvas>
+  <div id="info">※ 병실을 클릭하여 환자 목록을 확인하거나 입/퇴원 처리할 수 있습니다.</div>
+
+  <dialog id="roomDialog">
+    <h3 id="roomTitle">병실 정보</h3>
+    <p><strong>수용 인원:</strong> <span id="roomCapacity"></span></p>
+    <p><strong>현재 환자:</strong></p>
+    <ul id="patientList"></ul>
+    <input type="text" id="newPatientName" placeholder="환자 이름"><br>
+    <button onclick="assignPatientToRoom()">입원</button>
+    <button onclick="dischargePatientFromRoom()">퇴원</button>
+    <button onclick="closeDialog()">닫기</button>
+  </dialog>
+
+  <script src="/javascripts/room-script.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>환자 정보 목록</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      color: #2a5d9f;
+    }
+    button {
+      background-color: #2a5d9f;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #e8f0fe;
+    }
+    td a {
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .green {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999;">
+    <button onclick="location.href='/afterlogin/rooms'" class="btn btn-secondary">이전화면으로</button>
+  </div>
+  <h2>환자 정보 목록</h2>
+  <button onclick="location.href='patientForm.html'">➕ 새 환자 등록하기</button>
+  <label>
+    병원 ID 필터: 
+    <input type="text" id="hospitalFilter" placeholder="병원 ID 입력">
+  </label>
+
+  <table>
+    <thead>
+      <tr>
+        <th>이름</th>
+        <th>생년월일</th>
+        <th>병원 ID</th>
+        <th>진단 내용</th>
+      </tr>
+    </thead>
+    <tbody id="patientTableBody"></tbody>
+  </table>
+
+  <script>
+    async function loadPatients() {
+      const res = await fetch('/api/patient');
+      const patients = await res.json();
+      const tbody = document.getElementById('patientTableBody');
+      const filter = document.getElementById('hospitalFilter').value.trim();
+
+      tbody.innerHTML = '';
+      patients.forEach(p => {
+      
+        if (filter && p.hospitalId !== filter) return;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><a href="patient.html?id=${p._id}">${p.name}</a></td>
+          <td>${new Date(p.birthdate).toLocaleDateString()}</td>
+          <td>${p.hospitalId}</td>
+          <td>${p.medicalRecords[0]?.diagnosis || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('hospitalFilter').addEventListener('input', loadPatients);
+      loadPatients();
+    });
+  </script>
+</body>
+</html>

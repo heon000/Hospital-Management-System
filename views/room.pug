@@ -1,0 +1,135 @@
+doctype html
+html(lang="ko")
+  head
+    meta(charset="UTF-8")
+    title 병실 관리 시스템
+    style.
+      body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 0;
+      }
+      h2 {
+        text-align: center;
+        background-color: #1976d2;
+        color: white;
+        padding: 20px 0;
+        margin: 0;
+      }
+      #controls, #info {
+        text-align: center;
+        margin-top: 15px;
+      }
+      input, button {
+        margin: 5px;
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      button {
+        background-color: #1976d2;
+        color: white;
+        cursor: pointer;
+      }
+      canvas {
+        border: 1px solid #ccc;
+        display: block;
+        margin: 20px auto;
+      }
+      dialog {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        padding: 20px;
+        width: 300px;
+        font-size: 14px;
+      }
+      dialog h3 {
+        margin-top: 0;
+      }
+      dialog input {
+        width: 90%;
+        margin-bottom: 10px;
+      }
+      dialog button {
+        margin: 3px;
+        padding: 5px 10px;
+        font-size: 13px;
+      }
+
+      .top-buttons {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+
+      .top-buttons a {
+        display: inline-block;
+        background-color: #2196f3;
+        color: white;
+        padding: 8px 14px;
+        margin-left: 8px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+      }
+
+      .top-buttons a:hover {
+        background-color: #1565c0;
+      }
+  body
+    if session && session.user
+      nav(style="text-align: right; margin: 10px")
+        a(href="/auth/logout", style="text-decoration: none; color: red") 로그아웃
+
+    button#goManagerBtn(type="button") 병원 관리자 페이지
+    button#goPatientBtn(type="button") 환자 관리 페이지 이동
+    button(type="button" onclick="location.href='/reservation/doctor-schedule.html'") 의료진 스케줄 관리
+
+    h2 🏥 병실 관리 시스템
+
+    #controls
+      label
+        | 병원 ID:
+        input(type="text" id="hospitalId" readonly value=locals.session.user.hospitalId size="24")
+      br
+      label
+        | 층 수:
+        input(type="number" id="floorCount" min="1" value="3")
+      label
+        | 층당 방 수:
+        input(type="number" id="roomPerFloor" min="1" value="4")
+      label
+        | 방당 수용 인원:
+        input(type="number" id="capacity" min="1" value="4")
+      br
+      button(type="button" onclick="initializeRooms()") 병실 정보 입력
+      button(type="button" onclick="fetchRooms()") 병실 정보 조회
+
+    div(style="text-align:center; margin-top:10px;")
+      input(type="text" id="searchName" placeholder="환자 이름 검색")
+      button(type="button" onclick="searchPatient()") 검색
+
+    #searchResult(style="text-align:center; font-weight:bold; margin-top:5px;")
+
+    canvas#floorCanvas(width="1200" height="800")
+    #info ※ 병실을 클릭하여 환자 목록을 확인하거나 입/퇴원 처리할 수 있습니다.
+
+    dialog#roomDialog
+      h3#roomTitle 병실 정보
+      p
+        strong 수용 인원:
+        span#roomCapacity
+      p
+        strong 현재 환자:
+      ul#patientList
+      input(type="text" id="newPatientName" placeholder="환자 이름")
+      br
+      button(type="button" onclick="assignPatientToRoom()") 입원
+      button(type="button" onclick="dischargePatientFromRoom()") 퇴원
+      button(type="button" onclick="closeDialog()") 닫기
+
+    script(src="/javascripts/room-script.js")

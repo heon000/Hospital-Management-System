@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>예약 이력 조회</title>
+  <style>
+    body { font-family: '맑은 고딕', sans-serif; padding: 30px; }
+    h1 { color: #1e88e5; }
+    label, input, button { margin: 5px; }
+    .reservation { border-bottom: 1px solid #ccc; padding: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>예약 이력 조회</h1>
+
+  <label>조회 대상:
+    <select id="roleSelect">
+      <option value="patient">환자</option>
+      <option value="doctor">의료진</option>
+    </select>
+  </label>
+  <label>ID:
+    <input type="text" id="userId" placeholder="환자 또는 의료진 ID 입력" />
+  </label>
+  <button onclick="loadReservations()">조회</button>
+
+  <hr>
+  <div id="resultArea"></div>
+
+  <script>
+    async function loadReservations() {
+      const role = document.getElementById("roleSelect").value;
+      const id = document.getElementById("userId").value.trim();
+      if (!id) return alert("ID를 입력해주세요.");
+
+      const res = await fetch("/api/reservations"); // 전체 가져와서 필터링
+      const data = await res.json();
+      const filtered = data.filter(r => r[role + "Id"] === id);
+
+      const result = filtered.map(r => `
+        <div class="reservation">
+          🏥 병원: ${r.hospitalId}<br>
+          👨‍⚕️ 의사: ${r.doctorId}<br>
+          📅 예약 시간: ${r.reservedTime}<br>
+          📌 상태: ${r.status}
+        </div>
+      `).join('');
+
+      document.getElementById("resultArea").innerHTML = result || "결과 없음";
+    }
+  </script>
+</body>
+</html>

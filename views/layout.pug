@@ -1,0 +1,13 @@
+doctype html
+
+html
+  head
+    title 병원 시스템
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+
+    if session && session.user
+      nav(style="text-align: right; margin: 10px")
+        a(href="/auth/logout", style="text-decoration: none; color: red") 로그아웃
+
+  block content

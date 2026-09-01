@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의료진 스케줄 관리</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: '굴림', sans-serif;
+            background-color: #e9ecef;
+            padding: 10px;
+        }
+        .navbar {
+            background-color: #495057 !important;
+            margin-bottom: 20px;
+        }
+        .card {
+            border: 1px solid #adb5bd;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        .card-header {
+            background-color: #e9ecef;
+            padding: 8px;
+        }
+        .calendar-container { 
+            height: 400px;
+        }
+        #calendar { 
+            height: 100%;
+            padding: 5px;
+        }
+        .fc-event {
+            cursor: pointer;
+            border: 1px solid #6c757d;
+            font-size: 12px;
+        }
+        .fc-event.available {
+            background-color: #a8e6cf;
+            border-color: #6c757d;
+        }
+        .fc-event.unavailable {
+            background-color: #ffb3ba;
+            border-color: #6c757d;
+        }
+        .btn {
+            border-radius: 2px;
+            font-size: 13px;
+            padding: 4px 8px;
+        }
+        .table {
+            font-size: 13px;
+        }
+        .badge {
+            font-weight: normal;
+            font-size: 12px;
+        }
+        .form-label {
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .form-control, .form-select {
+            font-size: 13px;
+            padding: 4px 8px;
+        }
+        .container {
+            max-width: 95%;
+        }
+        .row {
+            margin: 0 -5px;
+        }
+        .col-md-8, .col-md-4, .col-md-12 {
+            padding: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="javascript:history.back()">병원 예약 시스템</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="javascript:history.back()">홈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/reservation/doctor-schedule.html">스케줄 관리</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">스케줄 관리</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">스케줄 등록</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="scheduleForm">
+                            <div class="mb-3">
+                                <label class="form-label">병원</label>
+                                <select class="form-select" id="hospital" required>
+                                    <option value="">병원 선택</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">의료진</label>
+                                <select class="form-select" id="doctor" required>
+                                    <option value="">의료진 선택</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">진료과</label>
+                                <select class="form-select" id="department" required>
+                                    <option value="">진료과 선택</option>
+                                    <option value="내과">내과</option>
+                                    <option value="외과">외과</option>
+                                    <option value="소아과">소아과</option>
+                                    <option value="산부인과">산부인과</option>
+                                    <option value="정형외과">정형외과</option>
+                                    <option value="신경과">신경과</option>
+                                    <option value="피부과">피부과</option>
+                                    <option value="안과">안과</option>
+                                    <option value="이비인후과">이비인후과</option>
+                                    <option value="치과">치과</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">날짜</label>
+                                <input type="date" class="form-control" id="date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">시작 시간</label>
+                                <input type="time" class="form-control" id="startTime" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">종료 시간</label>
+                                <input type="time" class="form-control" id="endTime" required>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="isHoliday">
+                                <label class="form-check-label">휴일</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">등록</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">예약 관리</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>예약일</th>
+                                        <th>시간</th>
+                                        <th>환자</th>
+                                        <th>상태</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reservationList">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/javascripts/fullcalendar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/moment.min.js"></script>
+    <script>
+        let calendar;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 병원 목록 로드
+            loadHospitals();
+
+            // 캘린더 초기화
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    const doctorId = document.getElementById('doctor').value;
+                    const url = doctorId ? `/api/schedules/doctor/${doctorId}` : '/api/schedules/doctor/current';
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(successCallback)
+                        .catch(failureCallback);
+                },
+                eventClick: function(info) {
+                    if (info.event.extendedProps.status === 'available') {
+                        showReservationModal(info.event);
+                    }
+                },
+                eventDidMount: function(info) {
+                    info.el.classList.add(info.event.extendedProps.status);
+                }
+            });
+            calendar.render();
+
+            // 스케줄 폼 제출
+            document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitSchedule();
+            });
+
+            // 예약 목록 로드
+            loadReservations();
+        });
+
+        // 병원 목록 로드
+        async function loadHospitals() {
+            try {
+                const response = await fetch('/api/hospitals');
+                const hospitals = await response.json();
+                const hospitalSelect = document.getElementById('hospital');
+                
+                hospitalSelect.innerHTML = '<option value="">병원 선택</option>' + 
+                    hospitals.map(hospital => `
+                        <option value="${hospital._id}">${hospital.name}</option>
+                    `).join('');
+
+                // 첫 번째 병원이 있으면 자동 선택
+                if (hospitals.length > 0) {
+                    hospitalSelect.value = hospitals[0]._id;
+                    // 해당 병원의 의사 목록 로드
+                    await loadDoctorsForHospital();
+                }
+                hospitalSelect.addEventListener('change', async () => {
+                 // 병원이 변경되면 해당 병원 ID를 이용해 loadDoctorsForHospital을 호출
+                await loadDoctorsForHospital();
+
+                   // 의료진을 바꿀 때 달력/예약 목록도 갱신될 수 있도록
+                  if (calendar) {
+                 calendar.refetchEvents();
+                   }
+               loadReservations();
+                });
+
+
+            } catch (error) {
+                console.error('병원 목록 로드 실패:', error);
+            }
+        }
+
+        // 병원 선택 시 해당 병원의 의사 목록 로드
+        async function loadDoctorsForHospital() {
+            const hospitalId = document.getElementById('hospital').value;
+            const doctorSelect = document.getElementById('doctor');
+            if (!hospitalId) {
+                doctorSelect.innerHTML = '<option value="">의료진 선택</option>';
+                return;
+            }
+            try {
+                const response = await fetch(`/api/users?hospitalId=${hospitalId}&role=doctor`);
+                const doctors = await response.json();
+                doctorSelect.innerHTML = '<option value="">의료진 선택</option>' +
+                    doctors.map(doctor => `
+                        <option value="${doctor._id}">${doctor.name}${doctor.department ? ` (${doctor.department})` : ''}</option>
+                    `).join('');
+
+                // 첫 번째 의사가 있으면 자동 선택
+                if (doctors.length > 0) {
+                    doctorSelect.value = doctors[0]._id;
+                    // 달력과 예약 목록 갱신
+                    if (calendar) {
+                        calendar.refetchEvents();
+                    }
+                    loadReservations();
+                }
+
+                // 의사 선택 시 달력과 예약 목록 갱신을 위한 이벤트 리스너 추가
+                doctorSelect.addEventListener('change', function() {
+                    if (calendar) {
+                        calendar.refetchEvents();
+                    }
+                    loadReservations();
+                });
+            } catch (error) {
+                doctorSelect.innerHTML = '<option value="">의료진 선택</option>';
+                console.error('의료진 목록 로드 실패:', error);
+            }
+        }
+
+        // 스케줄 등록
+        async function submitSchedule() {
+            const hospitalId = document.getElementById('hospital').value;
+            const doctorId = document.getElementById('doctor').value;
+            const department = document.getElementById('department').value;
+            const date = document.getElementById('date').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const isHoliday = document.getElementById('isHoliday').checked;
+
+            if (!hospitalId || !doctorId || !department || !date || (!isHoliday && (!startTime || !endTime))) {
+                alert('모든 필수 항목을 입력해주세요.');
+                return;
+            }
+
+            try {
+                const scheduleData = {
+                    hospitalId,
+                    doctorId,
+                    department,
+                    date,
+                    availableTime: isHoliday ? [] : [{
+                        start: startTime,
+                        end: endTime
+                    }],
+                    isHoliday
+                };
+
+                // 전송 데이터 로그 추가
+                console.log('스케줄 등록 전송 데이터:', scheduleData);
+
+                const response = await fetch('/api/schedules', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(scheduleData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('스케줄이 등록되었습니다.');
+                    document.getElementById('scheduleForm').reset();
+                    if (calendar && typeof calendar.refetchEvents === 'function') calendar.refetchEvents();
+                    if (typeof loadReservations === 'function') loadReservations();
+                } else {
+                    alert(result.error || '스케줄 등록에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('스케줄 등록 오류:', error);
+                alert('서버 오류가 발생했습니다.');
+            }
+        }
+
+        // 예약 목록 로드
+        async function loadReservations() {
+            try {
+                const doctorId = document.getElementById('doctor').value;
+                const url = doctorId ? `/api/schedules/doctor/${doctorId}` : '/api/schedules/doctor/current';
+                const response = await fetch(url);
+                const schedules = await response.json();
+                console.log('loadReservations 호출됨');
+                console.log('받은 데이터:', schedules);
+                const reservationList = document.getElementById('reservationList');
+                reservationList.innerHTML = '';
+                if (!Array.isArray(schedules)) {
+                    alert('서버에서 잘못된 데이터를 반환했습니다.');
+                    return;
+                }
+                schedules.forEach(schedule => {
+                    const dateStr = schedule.start ? new Date(schedule.start).toLocaleDateString() : '-';
+                    const availableTime = schedule.extendedProps && Array.isArray(schedule.extendedProps.availableTime)
+                        ? schedule.extendedProps.availableTime[0]
+                        : null;
+                    const timeStr = availableTime ? `${availableTime.start} - ${availableTime.end}` : '-';
+                    const patient = schedule.extendedProps && schedule.extendedProps.patientName
+                        ? schedule.extendedProps.patientName : '-';
+                    const status = (schedule.extendedProps && schedule.extendedProps.status)
+                        || schedule.status
+                        || 'available';
+                    const statusText = getStatusText(status);
+                    const badge = getStatusBadgeClass(status);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${dateStr !== 'Invalid Date' ? dateStr : '-'}</td>
+                        <td>${timeStr}</td>
+                        <td>${patient}</td>
+                        <td>
+                            <span class="badge ${badge}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td>
+                            ${getActionButtons(schedule)}
+                        </td>
+                    `;
+                    reservationList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('예약 목록 로드 실패:', error);
+            }
+        }
+
+        // 상태에 따른 배지 클래스 반환
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'approved': return 'bg-success';
+                case 'pending': return 'bg-warning';
+                case 'cancelled': return 'bg-danger';
+                case 'available': return 'bg-info';
+                default: return 'bg-info';
+            }
+        }
+
+        // 상태 텍스트 반환
+        function getStatusText(status) {
+            switch (status) {
+                case 'approved': return '승인됨';
+                case 'pending': return '대기중';
+                case 'cancelled': return '취소됨';
+                case 'available': return '예약 가능';
+                default: return '예약 가능';
+            }
+        }
+
+        // 상태에 따른 작업 버튼 반환
+        function getActionButtons(schedule) {
+            const status = schedule.extendedProps && schedule.extendedProps.status;
+            const scheduleId = schedule._id || schedule.id;
+            if (!scheduleId) {
+                console.warn('스케줄 ID가 없습니다:', schedule);
+                return '';
+            }
+            if (status === 'pending') {
+                return `
+                    <button class="btn btn-sm btn-success me-1" onclick="updateReservationStatus('${scheduleId}', 'approved')">
+                        <i class="bi bi-check-circle"></i> 승인
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="updateReservationStatus('${scheduleId}', 'cancelled')">
+                        <i class="bi bi-x-circle"></i> 거절
+                    </button>
+                `;
+            } else if (status === 'approved') {
+                return `
+                    <button class="btn btn-sm btn-danger" onclick="updateReservationStatus('${scheduleId}', 'cancelled')">
+                        <i class="bi bi-x-circle"></i> 취소
+                    </button>
+                `;
+            } else if (status === 'available') {
+                return `
+                    <button class="btn btn-sm btn-danger" onclick="deleteSchedule('${scheduleId}')">
+                        <i class="bi bi-trash"></i> 삭제
+                    </button>
+                `;
+            }
+            return '';
+        }
+
+        // 예약 상태 업데이트
+        async function updateReservationStatus(scheduleId, newStatus) {
+            try {
+                const response = await fetch(`/api/schedules/${scheduleId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    alert(newStatus === 'approved' ? '예약이 승인되었습니다.' : '예약이 취소되었습니다.');
+                    // 달력과 예약 목록 갱신
+                    if (calendar) {
+                        calendar.refetchEvents();
+                    }
+                    loadReservations();
+                } else {
+                    const error = await response.json();
+                    alert(error.message || '상태 변경에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('상태 변경 오류:', error);
+                alert('상태 변경 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function deleteSchedule(scheduleId) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            try {
+                const response = await fetch(`/api/schedules/${scheduleId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert('스케줄이 삭제되었습니다.');
+                    if (calendar) calendar.refetchEvents();
+                    loadReservations();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || '삭제에 실패했습니다.');
+                }
+            } catch (err) {
+                alert('서버 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html> 

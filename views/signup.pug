@@ -1,0 +1,84 @@
+extends layout 
+
+block content 
+    h1 회원가입
+
+    if error 
+        p#errorMessage(style="color:red") #{error}
+        
+
+    form(method="POST", action="/auth/signup")
+        div
+            label(for="name") 이름:
+            input#name(type="text", name="name", placeholder="이름을 입력하세요", required)
+            
+
+        div
+            label(for="email") 이메일:
+            input#email(type="email", name="email", placeholder="병원 이메일을 입력하세요", required)
+            button#sendCodeBtn(type="button") 인증번호 발송
+            
+
+        div#codeSection
+            label(for="code") 인증번호:
+            input#code(type="text", name="code", placeholder="6자리 코드 입력", required)
+            span#timer 남은 시간: 03:00
+            button#verifyCodeBtn(type="button") 인증하기
+        
+        div
+            label(for="password") 비밀번호:
+            input#password(type="password", name="password", placeholder="비밀번호(6자 이상, 영문+숫자)", required)
+        
+        div
+            button(type="submit") 가입하기
+
+    script(src="https://code.jquery.com/jquery-3.6.0.min.js")
+    script.
+        let timerInterval;
+        function startTimer(duration) {
+        let timeLeft = duration;
+        $('#timer').removeClass('hidden').text('남은 시간: ' + timeLeft + '초');
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                $('#timer').text('인증번호가 만료되었습니다.');
+            } else {
+                $('#timer').text('남은 시간: ' + timeLeft + '초');
+            }
+            }, 1000);
+        }
+
+        $('#sendCodeBtn').click(function () {
+            const email = $('#email').val();
+            if (!email) return alert('이메일을 입력해주세요.');
+            if (!email.endsWith('@gmail.com')) return  alert('병원 이메일만 인증 가능합니다.');
+
+            $.post('/auth/send-code', { email }, function (res) {
+                if (res.success) {
+                    alert('인증번호가 전송되었습니다!');
+                    startTimer(180); // 3분 타이머
+                } else {
+                    alert(res.message || '인증번호 전송 실패');
+                }
+            });
+        });
+
+        $('#verifyCodeBtn').click(function () {
+            const email = $('#email').val();
+            const code = $('#code').val();
+            if (!code) return alert('이메일과 인증번호를 입력하세요.');
+
+            $.post('/auth/verify-code', { email, code }, function (res) {
+                if (res.success) {
+                    alert('이메일 인증 성공!');
+                    clearInterval(timerInterval);
+                    $('#timer').text('인증 완료');
+                } else {
+                    alert(res.message || '인증번호가 일치하지 않거나 만료되었습니다.');
+                }
+            });
+        });
+
+    br
+    a.button-link(href="/") 메인화면으로

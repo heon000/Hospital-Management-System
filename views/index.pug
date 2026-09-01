@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1 병원 시스템
+
+  div.button-container
+    a(href="/auth/signup") 회원가입
+  
+    a(href="/auth/login") 로그인
+
+    br
+    button(type="button" onclick="location.href='/reservation/patient-reservation.html'") 환자 예약 관리
+    button(type="button" onclick="location.href='/reservation/hospital.html'") 병원 목록 조회
